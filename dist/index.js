@@ -16,6 +16,7 @@ const apollo_server_core_1 = require("apollo-server-core");
 const apollo_server_express_1 = require("apollo-server-express");
 const connect_redis_1 = __importDefault(require("connect-redis"));
 const cors_1 = __importDefault(require("cors"));
+const dotenv_1 = __importDefault(require("dotenv"));
 const express_1 = __importDefault(require("express"));
 const express_session_1 = __importDefault(require("express-session"));
 const ioredis_1 = __importDefault(require("ioredis"));
@@ -32,17 +33,19 @@ const PostResolver_1 = require("./resolvers/PostResolver");
 const UserResolver_1 = require("./resolvers/UserResolver");
 const createUpdootLoader_1 = require("./utils/createUpdootLoader");
 const createUserLoader_1 = require("./utils/createUserLoader");
+dotenv_1.default.config();
 const main = () => __awaiter(void 0, void 0, void 0, function* () {
     const AppDataSource = new typeorm_1.DataSource({
         type: 'postgres',
-        database: 'lireddit2',
-        username: 'ikram',
-        password: '123',
+        database: process.env.DATABASE_NAME,
+        username: process.env.DB_USER,
+        password: process.env.PASSWORD,
         logging: true,
         synchronize: true,
         entities: [Post_1.Post, User_1.User, Updoot_1.Updoot],
         migrations: [path_1.default.join(__dirname, './migrations/*')]
     });
+    console.log(process.env.DB_USER);
     yield AppDataSource.initialize();
     // await AppDataSource.runMigrations()
     const app = (0, express_1.default)();
@@ -56,7 +59,7 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
     //     next()
     // })
     const RedisStore = (0, connect_redis_1.default)(express_session_1.default); // Connect redis to express-session
-    const redis = new ioredis_1.default('localhost'); // create client 
+    const redis = new ioredis_1.default(process.env.REDIS_URL); // create client 
     redis.on('error', (err) => console.log('---------REDIS ERROR------', err)); // display error 
     redis.on('connect', () => console.log('-------------REDIS CONNECTION SUCCESFULLY CREATED----------')); // display connecting signal
     app.use((0, express_session_1.default)({
@@ -68,7 +71,7 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
             sameSite: 'lax',
             secure: false // cookie only works on https
         },
-        secret: constants_1.SESSION_SECRET,
+        secret: process.env.SESSION_SECRET,
         resave: false,
         saveUninitialized: false, // If true , Even session is empty it will stores session object in a session.
         // Set saveUninitialized to false if you want to prevent storing unnecessary empty sessions 

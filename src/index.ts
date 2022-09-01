@@ -2,6 +2,7 @@ import { ApolloServerPluginLandingPageGraphQLPlayground } from 'apollo-server-co
 import { ApolloServer } from 'apollo-server-express'
 import connectRedis from 'connect-redis'
 import cors from 'cors'
+import dotenv from 'dotenv'
 import express from 'express'
 import session from 'express-session'
 import Redis from 'ioredis'
@@ -9,7 +10,7 @@ import path from 'path'
 import 'reflect-metadata'
 import { buildSchema } from 'type-graphql'
 import { DataSource } from 'typeorm'
-import { COOKIE_NAME, SESSION_SECRET } from './constants'
+import { COOKIE_NAME } from './constants'
 import { Post } from './entities/Post'
 import { Updoot } from './entities/Updoot'
 import { User } from './entities/User'
@@ -19,18 +20,21 @@ import { UserResolver } from './resolvers/UserResolver'
 import { MyContext } from './types'
 import { createUpdootLoader } from './utils/createUpdootLoader'
 import { createUserLoader } from './utils/createUserLoader'
+dotenv.config()
 
 const main =  async() => {
     const AppDataSource = new DataSource({
         type: 'postgres',
-        database: 'lireddit2',
-        username: 'ikram',
-        password: '123',
+        database: process.env.DATABASE_NAME,
+        username: process.env.DB_USER,
+        password: process.env.PASSWORD,
         logging: true,
         synchronize: true,
         entities: [Post , User , Updoot],
         migrations: [path.join(__dirname , './migrations/*')]
     })
+
+    console.log(process.env.DB_USER)
 
     await AppDataSource.initialize()
     // await AppDataSource.runMigrations()
@@ -48,7 +52,7 @@ const main =  async() => {
     // })
 
     const RedisStore = connectRedis(session) // Connect redis to express-session
-    const redis = new Redis('localhost') // create client 
+    const redis = new Redis(process.env.REDIS_URL) // create client 
     redis.on('error' , (err) => console.log('---------REDIS ERROR------' , err)) // display error 
     redis.on('connect' , () => console.log('-------------REDIS CONNECTION SUCCESFULLY CREATED----------' )) // display connecting signal
     
@@ -62,7 +66,7 @@ const main =  async() => {
                 sameSite: 'lax',
                 secure: false // cookie only works on https
             },
-            secret: SESSION_SECRET, // session secret for encrypting data
+            secret: process.env.SESSION_SECRET, // session secret for encrypting data
             resave: false, // If true , when modification is performed on the session it will re-write the req.session
             saveUninitialized: false, // If true , Even session is empty it will stores session object in a session.
             // Set saveUninitialized to false if you want to prevent storing unnecessary empty sessions 
